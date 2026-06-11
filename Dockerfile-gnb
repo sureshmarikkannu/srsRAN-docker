@@ -27,6 +27,7 @@
 # MARCH                 gcc/clang compatible arch
 # NUM_JOBS              Number or empty for all
 # EXTRA_CMAKE_ARGS      Extra flags for srsRAN Project
+# FORCE_MIN_POOL_WORKERS Override srsRAN min_pool_workers in worker_manager.cpp
 
 ARG OS_VERSION=24.04
 # Using `main` ref because it has some ORAN/E2-related changes that are required to test srsRAN with the Aether SD-RAN (RIC)
@@ -37,6 +38,7 @@ ARG MARCH=native
 ARG NUM_JOBS=""
 ARG COMPILER=clang
 ARG EXTRA_CMAKE_ARGS="-DENABLE_EXPORT=On -DENABLE_ZEROMQ=On"
+ARG FORCE_MIN_POOL_WORKERS="4"
 
 ##################
 # Stage 1: Build #
@@ -53,7 +55,13 @@ RUN apt-get update && \
 # ADD . /src/
 # An alternative could be to download the repo
 ARG SRSRAN_REF
-RUN git clone --depth 1 --branch ${SRSRAN_REF} https://github.com/srsran/srsRAN_Project.git /src
+ARG FORCE_MIN_POOL_WORKERS
+RUN git clone --depth 1 --branch ${SRSRAN_REF} https://github.com/srsran/srsRAN_Project.git /src && \
+    if [ -n "${FORCE_MIN_POOL_WORKERS}" ]; then \
+      sed -i "s/const unsigned min_pool_workers = 1;/const unsigned min_pool_workers = ${FORCE_MIN_POOL_WORKERS};/" \
+        /src/apps/services/worker_manager/worker_manager.cpp && \
+      grep -n "min_pool_workers" /src/apps/services/worker_manager/worker_manager.cpp; \
+    fi
 
 # Install srsRAN build dependencies
 RUN /src/docker/scripts/install_dependencies.sh build && \

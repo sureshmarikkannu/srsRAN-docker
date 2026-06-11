@@ -18,6 +18,7 @@
 # COMPILER              gcc or clang
 # EXTRA_CMAKE_ARGS      Extra flags for OCUDU
 # OCUDU_REF             Git branch / tag to build
+# FORCE_MIN_POOL_WORKERS Override OCUDU min_pool_workers in worker_manager.cpp
 
 ARG OS_VERSION=24.04
 ARG OCUDU_REF=main
@@ -27,6 +28,7 @@ ARG MARCH=native
 ARG NUM_JOBS=""
 ARG COMPILER=gcc
 ARG EXTRA_CMAKE_ARGS="-DENABLE_EXPORT=On -DENABLE_ZEROMQ=On"
+ARG FORCE_MIN_POOL_WORKERS="4"
 
 ####################################
 # Stage 1a: Base build environment #
@@ -41,7 +43,13 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 ARG OCUDU_REF
-RUN git clone --depth 1 --branch ${OCUDU_REF} https://gitlab.com/ocudu/ocudu.git /src
+ARG FORCE_MIN_POOL_WORKERS
+RUN git clone --depth 1 --branch ${OCUDU_REF} https://gitlab.com/ocudu/ocudu.git /src && \
+    if [ -n "${FORCE_MIN_POOL_WORKERS}" ]; then \
+      sed -i "s/const unsigned min_pool_workers = 1;/const unsigned min_pool_workers = ${FORCE_MIN_POOL_WORKERS};/" \
+        /src/apps/services/worker_manager/worker_manager.cpp && \
+      grep -n "min_pool_workers" /src/apps/services/worker_manager/worker_manager.cpp; \
+    fi
 
 # Install OCUDU build dependencies (includes ROHC, UHD, DPDK build deps)
 RUN /src/docker/scripts/install_dependencies.sh build && \

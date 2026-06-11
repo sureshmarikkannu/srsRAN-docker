@@ -29,9 +29,11 @@ DOCKER_LABEL_BUILD_DATE  ?= $(shell date -u "+%Y-%m-%dT%H:%M:%SZ")
 
 ## Upstream source refs (must match Dockerfile ARG defaults)
 SRSRAN_GNB_REF           ?= release_25_10
-SRSRAN_UE_REF            ?= release_23_11
-OCUDU_REF                ?= release_26_04
-UERANSIM_REF             ?= v3.2.7
+SRSRAN_UE_REF                     ?= release_23_11
+OCUDU_REF                         ?= release_26_04
+UERANSIM_REF                      ?= v3.2.7
+SRSRAN_GNB_FORCE_MIN_POOL_WORKERS ?= 4
+OCUDU_FORCE_MIN_POOL_WORKERS      ?= 4
 
 SRSRAN_GNB_REPO          ?= https://github.com/srsran/srsRAN_Project.git
 SRSRAN_UE_REPO           ?= https://github.com/srsran/srsRAN_4G.git
@@ -59,9 +61,9 @@ docker-build:
 			_UPSTREAM_COMMIT="unknown"; \
 		fi; \
 		case $$target in \
-			gnb)    _TARGET_BUILD_ARGS="--build-arg SRSRAN_REF=$(SRSRAN_GNB_REF)" ;; \
+			gnb)    _TARGET_BUILD_ARGS="--build-arg SRSRAN_REF=$(SRSRAN_GNB_REF) --build-arg FORCE_MIN_POOL_WORKERS=$(SRSRAN_GNB_FORCE_MIN_POOL_WORKERS)" ;; \
 			ue)     _TARGET_BUILD_ARGS="--build-arg SRSRAN_REF=$(SRSRAN_UE_REF)" ;; \
-			ocudu)  _TARGET_BUILD_ARGS="--build-arg OCUDU_REF=$(OCUDU_REF)" ;; \
+			ocudu)  _TARGET_BUILD_ARGS="--build-arg OCUDU_REF=$(OCUDU_REF) --build-arg FORCE_MIN_POOL_WORKERS=$(OCUDU_FORCE_MIN_POOL_WORKERS)" ;; \
 			ueransim) _TARGET_BUILD_ARGS="--build-arg UERANSIM_REF=$(UERANSIM_REF)" ;; \
 			*)      _TARGET_BUILD_ARGS="" ;; \
 		esac; \
